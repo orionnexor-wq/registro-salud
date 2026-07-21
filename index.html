@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Registro</title>
+<meta name="theme-color" content="#0d0d0d">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Registro">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231a1a19'/%3E%3Cg fill='%233987e5'%3E%3Crect x='15' y='33' width='8' height='18'/%3E%3Crect x='28' y='20' width='8' height='31'/%3E%3Crect x='41' y='27' width='8' height='24'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAB5UlEQVR42u3SwQkAIAwEQdswnVihldqHPwsICqID+w/kpkRUKV3xAgEkgASQAJIAEkACSABJAAkgASSAJIAEkAASQBJAAkgACSABJAEkgASQAJIAEkACSABJAAkgASSAJIAEkAASQAJIAkgACSABJAEkgASQAJIAEkACSABJAK1aH1sCCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAAC6Cyg98gCBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBNBtgH6YEyCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACyEWAAAIIIIAAAggggAACCCBzAgQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAHkIkAAAWROgAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIBcBAgggAACCCCAAAIIIIAAMidAAAEEEEAAAQQQQABJAAkgASSABJAEkAASQAJIAkgACSABJAEkgASQAJIAEkACSAAJIAkgASSABJAEkAASQAJIAkgACSABJAEkgASQABJAUroJV/hPyJBJ7ScAAAAASUVORK5CYII=">
+<style>
+:root{
+  --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+  --tos:#3987e5; --desc:#008300; --vapo:#c98500; --fumado:#d55181;
+  --ok:#0ca30c;
+  --tap:46px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--plane); color:var(--ink);
+  font:400 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;
+  overscroll-behavior:none;
+}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+.app{
+  height:100dvh; display:flex; flex-direction:column;
+  padding:max(10px,env(safe-area-inset-top)) 14px max(10px,env(safe-area-inset-bottom));
+  max-width:560px; margin:0 auto;
+}
+.view{display:none;flex:1;min-height:0;flex-direction:column}
+.view.on{display:flex}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:2px}
+.fecha{font-size:clamp(21px,6.2vw,26px);font-weight:650;letter-spacing:-.02em;line-height:1.15}
+.fecha small{display:block;font-size:13px;font-weight:400;color:var(--muted);letter-spacing:0}
+.nav{display:flex;gap:2px;flex:none}
+.icon{width:var(--tap);height:var(--tap);display:grid;place-items:center;border-radius:10px;color:var(--ink-2)}
+.icon:active{background:var(--surface-2)}
+.icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.icon[disabled]{opacity:.3;pointer-events:none}
+.dnav{display:flex;align-items:center;gap:0;min-width:0;flex:1}
+.icon.nudge{width:30px;flex:none}
+.fechaBtn{text-align:left;padding:2px 6px;border-radius:11px;min-width:0}
+.fechaBtn:active{background:var(--surface-2)}
+#datePick{position:absolute;left:14px;top:44px;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+
+/* ---------- aviso dias faltantes ---------- */
+.aviso{
+  display:flex;align-items:center;gap:10px;justify-content:space-between;
+  background:var(--surface);border:1px solid var(--ring);border-radius:12px;
+  padding:8px 8px 8px 12px;margin:8px 0 2px;font-size:14px;color:var(--ink-2);
+}
+.aviso b{color:var(--ink);font-weight:600}
+.aviso button{
+  flex:none;background:var(--surface-2);border:1px solid var(--ring);border-radius:9px;
+  padding:0 14px;height:38px;font-size:14px;font-weight:600;color:var(--ink);
+}
+.aviso.atras{border-color:rgba(57,135,229,.45)}
+
+/* ---------- bloques ---------- */
+main{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;padding:4px 0}
+.bloque{display:flex;flex-direction:column;gap:5px}
+.q{font-size:14px;font-weight:600;letter-spacing:.02em;color:var(--ink-2);text-transform:uppercase}
+.escala{display:grid;gap:4px}
+.escala.n11{grid-template-columns:repeat(11,1fr)}
+.escala.n10{grid-template-columns:repeat(10,1fr)}
+.escala button{
+  height:var(--tap);border-radius:9px;background:var(--surface);border:1px solid var(--ring);
+  font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink-2);
+  display:grid;place-items:center;transition:background .08s,color .08s;
+}
+.escala button:active{background:var(--surface-2)}
+.escala button[aria-pressed="true"]{background:var(--ink);color:#0d0d0d;border-color:var(--ink);font-weight:700}
+.extremos{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:0 2px}
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tres button{
+  height:58px;border-radius:11px;background:var(--surface);border:1px solid var(--ring);
+  font-size:15px;color:var(--ink-2);
+}
+.tres button:active{background:var(--surface-2)}
+.tres button[aria-pressed="true"]{background:var(--ink);color:#0d0d0d;border-color:var(--ink);font-weight:650}
+
+/* ---------- extras ---------- */
+.extras{display:flex;flex-direction:column;gap:3px}
+.extrasRow{display:flex;gap:8px}
+.campo{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:0 10px;height:var(--tap)}
+.campo label{font-size:13px;color:var(--muted);white-space:nowrap}
+.campo input{flex:1;min-width:0;background:none;border:0;outline:none;font-size:17px;font-variant-numeric:tabular-nums;text-align:right}
+.campo .u{font-size:13px;color:var(--muted)}
+.hint{font-size:11.5px;color:var(--muted);padding-left:2px}
+
+/* ---------- nota ---------- */
+.notaRow{display:flex;align-items:center;gap:8px;min-height:var(--tap)}
+#notaToggle{color:var(--muted);font-size:14px;padding:6px 2px}
+#notaWrap{display:none;flex:1;align-items:center;gap:8px}
+#notaWrap.on{display:flex}
+#nota{flex:1;min-width:0;background:var(--surface);border:1px solid var(--ring);border-radius:10px;height:var(--tap);padding:0 12px;outline:none;font-size:15px}
+#nota:focus{border-color:var(--ink-2)}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--ring);
+  color:var(--ink-2);border-radius:999px;padding:7px 15px;font-size:14px;
+  opacity:0;pointer-events:none;transition:opacity .22s;z-index:20;
+}
+#toast.on{opacity:1}
+#toast svg{width:15px;height:15px;stroke:var(--ok);stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- vistas secundarias ---------- */
+.scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px}
+h2{font-size:19px;font-weight:650;margin:0}
+h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 8px}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:12px}
+canvas{display:block;width:100%;touch-action:pan-y}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.leyenda span{display:flex;align-items:center;gap:6px}
+.sw{width:13px;height:13px;border-radius:50%;flex:none}
+.sw.line{height:3px;border-radius:2px;width:16px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:10px}
+.tile .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.tile .val{font-size:23px;font-weight:650;margin-top:3px;font-variant-numeric:tabular-nums}
+.tile .val small{font-size:13px;color:var(--muted);font-weight:400}
+.tileRow{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12px;color:var(--ink-2)}
+.barra{height:26px;border-radius:6px;min-width:2px}
+.brow{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:9px;margin-bottom:7px;font-size:13px}
+.brow .n{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.vacio{color:var(--muted);font-size:14px;padding:16px 2px;line-height:1.5}
+.aj{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--grid)}
+.aj .t{font-size:15px}
+.aj .d{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.btn{
+  display:block;width:100%;height:50px;border-radius:11px;background:var(--surface);
+  border:1px solid var(--ring);color:var(--ink);font-size:15px;font-weight:550;margin-top:9px;
+}
+.btn:active{background:var(--surface-2)}
+.btn.rojo{color:#e66767;border-color:rgba(230,103,103,.35)}
+.btn.primary{background:var(--tos);border-color:var(--tos);color:#fff;font-weight:650}
+.login{flex:1;display:flex;flex-direction:column;justify-content:center;gap:13px;max-width:340px;width:100%;margin:0 auto;padding:0 4px}
+.logintitle{font-size:27px;font-weight:700;letter-spacing:-.02em}
+.loginsub{font-size:15px;color:var(--ink-2);line-height:1.5;margin-bottom:4px}
+#loginEmail{height:52px;border-radius:12px;background:var(--surface);border:1px solid var(--ring);padding:0 14px;font-size:16px;color:var(--ink);outline:none}
+#loginEmail:focus{border-color:var(--ink-2)}
+.loginmsg{font-size:13.5px;color:var(--ink-2);line-height:1.5;min-height:20px}
+.loginmsg.ok{color:var(--ok)}
+.sw-toggle{position:relative;width:50px;height:30px;border-radius:999px;background:var(--surface-2);border:1px solid var(--ring);flex:none;transition:background .15s}
+.sw-toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.sw-toggle[aria-pressed="true"]{background:var(--tos);border-color:var(--tos)}
+.sw-toggle[aria-pressed="true"]::after{transform:translateX(20px);background:#fff}
+.warn{background:rgba(201,133,0,.09);border:1px solid rgba(201,133,0,.32);border-radius:12px;padding:11px 13px;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.warn b{color:var(--ink)}
+#tip{
+  position:absolute;pointer-events:none;background:var(--surface-2);border:1px solid var(--ring);
+  border-radius:9px;padding:7px 10px;font-size:12.5px;line-height:1.5;color:var(--ink-2);
+  white-space:nowrap;opacity:0;transition:opacity .1s;z-index:10;
+}
+#tip b{color:var(--ink);font-weight:600}
+.wrapRel{position:relative}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<section id="v-login" class="view">
+  <div class="login">
+    <div class="logintitle">Tu registro diario</div>
+    <div class="loginsub">Privado y sincronizado entre tu teléfono y la compu. Entrás con tu mail — te llega un enlace, sin contraseñas.</div>
+    <input id="loginEmail" type="email" inputmode="email" autocomplete="email" enterkeyhint="go" placeholder="tu@email.com">
+    <button id="loginBtn" class="btn primary">Enviarme el enlace</button>
+    <div id="loginMsg" class="loginmsg"></div>
+  </div>
+</section>
+
+<!-- ══════════════ HOY ══════════════ -->
+<section id="v-hoy" class="view on">
+  <header>
+    <div class="dnav">
+      <button class="icon nudge" id="diaPrev" aria-label="Día anterior">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="fechaBtn" id="fechaBtn" aria-label="Elegir fecha para registrar">
+        <div class="fecha" id="fechaTxt">—</div>
+      </button>
+      <button class="icon nudge" id="diaNext" aria-label="Día siguiente">
+        <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="nav">
+      <button class="icon" id="goTend" aria-label="Tendencia">
+        <svg viewBox="0 0 24 24"><path d="M3 17l5.5-6 4 4L21 6"/><path d="M3 21h18"/></svg>
+      </button>
+      <button class="icon" id="goAj" aria-label="Ajustes">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.33-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6h.08A1.7 1.7 0 0 0 10 3.05V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.08a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+      </button>
+    </div>
+    <input type="date" id="datePick" aria-label="Fecha">
+  </header>
+
+  <div id="aviso" class="aviso" hidden></div>
+
+  <main>
+    <div class="bloque">
+      <div class="q">Tos</div>
+      <div class="escala n11" id="esc-tos"></div>
+      <div class="extremos"><span>0 · nada</span><span>10 · constante</span></div>
+    </div>
+
+    <div class="bloque">
+      <div class="q">Descanso</div>
+      <div class="escala n10" id="esc-desc"></div>
+      <div class="extremos"><span>1 · pésimo</span><span>10 · excelente</span></div>
+    </div>
+
+    <div class="bloque">
+      <div class="q">Cannabis</div>
+      <div class="tres" id="esc-can"></div>
+    </div>
+
+    <div class="bloque" id="blk-entreno" hidden>
+      <div class="q">Entrenamiento</div>
+      <div class="tres" id="esc-ent" style="grid-template-columns:repeat(2,1fr)"></div>
+    </div>
+
+    <div class="extras" id="extras" hidden></div>
+
+    <div class="notaRow">
+      <button id="notaToggle">+ nota</button>
+      <div id="notaWrap"><input id="nota" type="text" placeholder="una línea, opcional" maxlength="180" enterkeyhint="done"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ══════════════ TENDENCIA ══════════════ -->
+<section id="v-tend" class="view">
+  <header>
+    <div class="fecha" style="font-size:22px">Tendencia</div>
+    <div class="nav"><button class="icon" data-back aria-label="Volver">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button></div>
+  </header>
+  <div class="scroll" id="tendBody"></div>
+</section>
+
+<!-- ══════════════ AJUSTES ══════════════ -->
+<section id="v-aj" class="view">
+  <header>
+    <div class="fecha" style="font-size:22px">Ajustes</div>
+    <div class="nav"><button class="icon" data-back aria-label="Volver">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button></div>
+  </header>
+  <div class="scroll">
+    <div class="aj">
+      <div>
+        <div class="t">Registrar entrenamiento</div>
+        <div class="d">Agrega un cuarto botón sí/no en la pantalla diaria.</div>
+      </div>
+      <button class="sw-toggle" id="tgEntreno" aria-pressed="false" aria-label="Registrar entrenamiento"></button>
+    </div>
+
+    <h3>Copias de seguridad</h3>
+    <div class="warn">
+      <b>Los datos viven solo en este navegador.</b> Si borrás los datos de navegación,
+      desinstalás el navegador o usás modo incógnito, se pierden — no hay copia en ningún
+      servidor. Descargá el CSV una vez por semana y guardalo donde no se te pierda.
+      <div style="margin-top:7px" id="backupEstado"></div>
+    </div>
+    <button class="btn" id="btnCsv">Descargar CSV</button>
+    <button class="btn" id="btnCopy">Copiar resumen</button>
+    <button class="btn" id="btnImport">Importar CSV</button>
+    <input type="file" id="fileCsv" accept=".csv,text/csv" hidden>
+
+    <h3>Datos</h3>
+    <div class="aj" style="border:0"><div><div class="t" id="statDias">—</div><div class="d" id="statRango"></div></div></div>
+    <button class="btn rojo" id="btnBorrar">Borrar todos los datos</button>
+
+    <h3>Sesión</h3>
+    <div class="aj" style="border:0"><div><div class="t" id="statEmail">—</div><div class="d">Sesión abierta en este dispositivo.</div></div></div>
+    <button class="btn" id="btnLogout">Cerrar sesión</button>
+    <div style="height:24px"></div>
+  </div>
+</section>
+
+<div id="toast"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span id="toastTxt">Guardado</span></div>
+</div>
+
+<script>
+"use strict";
+/* ══════════════════════════ manifest (data URI, sin red) ══════════════════════════ */
+(function(){
+  var icon = document.querySelector('link[rel="apple-touch-icon"]').getAttribute('href');
+  var m = {name:"Registro diario",short_name:"Registro",display:"standalone",
+    background_color:"#0d0d0d",theme_color:"#0d0d0d",orientation:"portrait",start_url:".",
+    icons:[{src:icon,sizes:"192x192",type:"image/png",purpose:"any"}]};
+  var l=document.createElement('link'); l.rel='manifest';
+  l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(m));
+  document.head.appendChild(l);
+})();
+
+/* ══════════════════════════ config Supabase ══════════════════════════ */
+var SB_URL="https://wafpvllhtaqfderrrwia.supabase.co";
+var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhZnB2bGxodGFxZmRlcnJyd2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NjAyNjgsImV4cCI6MjEwMDIzNjI2OH0.BLLaBfH4rJ93IW80JeBvRpFHUF1wCcL79fd6ohYzA9c";
+
+/* ══════════════════════════ estado + cache local ══════════════════════════
+   La nube (Supabase) es la copia sincronizada entre dispositivos y el backup
+   que no se pierde. El cache local es la red de contención: cada cambio se
+   escribe acá AL INSTANTE, así ningún click se pierde aunque falle la red. */
+var CACHE="registro_salud_cache_v2";
+var PEND ="registro_salud_pend_v2";
+var DB={v:2,settings:{entreno:false},days:{},lastExport:null};
+var session=null, online=true;
+
+function guardarLocal(){ try{ localStorage.setItem(CACHE,JSON.stringify(DB)); }catch(e){} }
+function cargarCache(){
+  try{
+    var p=JSON.parse(localStorage.getItem(CACHE)||"null");
+    if(p&&typeof p==="object"){
+      DB.days=p.days&&typeof p.days==="object"?p.days:{};
+      DB.settings=Object.assign({entreno:false},p.settings||{});
+      DB.lastExport=p.lastExport||null;
+    }
+  }catch(e){}
+}
+/* si en este navegador quedaron datos del prototipo file:// viejo, los rescatamos */
+function migrarViejo(){
+  try{
+    var raw=localStorage.getItem("registro_salud_v1");
+    if(raw && !localStorage.getItem(CACHE)){
+      var p=JSON.parse(raw);
+      if(p&&p.days){ DB.days=p.days; DB.settings=Object.assign({entreno:false},p.settings||{}); DB.lastExport=p.lastExport||null; guardarLocal(); }
+    }
+  }catch(e){}
+}
+
+/* días que no llegaron a la nube: se reintentan solos */
+function pend(){ try{ return JSON.parse(localStorage.getItem(PEND)||"[]"); }catch(e){ return []; } }
+function marcarPend(f){ var s=pend(); if(s.indexOf(f)<0){ s.push(f); localStorage.setItem(PEND,JSON.stringify(s)); } }
+function quitarPend(f){ localStorage.setItem(PEND,JSON.stringify(pend().filter(function(x){return x!==f;}))); }
+function marcarOnline(v){ online=v; }
+
+/* ══════════════════════════ sesión / auth ══════════════════════════ */
+function loadSession(){ try{ session=JSON.parse(localStorage.getItem("sb_session")||"null"); }catch(e){ session=null; } }
+function saveSession(s){ session=s; localStorage.setItem("sb_session",JSON.stringify(s)); }
+function clearSession(){ session=null; localStorage.removeItem("sb_session"); }
+function aplicarToken(d){
+  saveSession({ access_token:d.access_token, refresh_token:d.refresh_token,
+    expires_at: Math.floor(Date.now()/1000)+(d.expires_in||3600),
+    user: d.user || (session&&session.user) || null });
+}
+async function ensureToken(){
+  if(!session) throw new Error("sin sesión");
+  if(session.expires_at && session.expires_at-60 > Date.now()/1000) return;
+  var r=await fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+    method:"POST", headers:{"apikey":SB_ANON,"Content-Type":"application/json"},
+    body:JSON.stringify({refresh_token:session.refresh_token})});
+  if(r.ok){ aplicarToken(await r.json()); } else { clearSession(); throw new Error("sesión vencida"); }
+}
+async function fetchUser(){
+  var r=await fetch(SB_URL+"/auth/v1/user",{headers:{"apikey":SB_ANON,"Authorization":"Bearer "+session.access_token}});
+  if(r.ok){ session.user=await r.json(); saveSession(session); }
+}
+async function sb(path,opts){
+  opts=opts||{}; await ensureToken();
+  opts.headers=Object.assign({"apikey":SB_ANON,"Authorization":"Bearer "+session.access_token,"Content-Type":"application/json"},opts.headers||{});
+  return fetch(SB_URL+path,opts);
+}
+
+/* ══════════════════════════ sincronización ══════════════════════════ */
+function g(v){ return v==null?null:v; }
+function filaDeDia(f){
+  var r=DB.days[f]||{};
+  return { user_id:session.user.id, fecha:f, tos:g(r.tos), descanso:g(r.desc),
+    cannabis:r.can||null, peso:g(r.peso), cintura:g(r.cintura),
+    entrenamiento:r.ent||null, nota:r.nota||null };
+}
+async function pullTodo(){
+  var r=await sb("/rest/v1/dias?select=*");
+  if(!r.ok) return false;
+  var rows=await r.json(), days={};
+  rows.forEach(function(x){
+    var o={};
+    if(x.tos!=null)o.tos=+x.tos; if(x.descanso!=null)o.desc=+x.descanso;
+    if(x.cannabis!=null)o.can=x.cannabis; if(x.peso!=null)o.peso=+x.peso;
+    if(x.cintura!=null)o.cintura=+x.cintura; if(x.entrenamiento!=null)o.ent=x.entrenamiento;
+    if(x.nota!=null)o.nota=x.nota;
+    if(Object.keys(o).length) days[x.fecha]=o;
+  });
+  DB.days=days;
+  var ra=await sb("/rest/v1/ajustes?select=*");
+  if(ra.ok){ var a=await ra.json(); if(a[0]){ DB.settings.entreno=!!a[0].entreno; DB.lastExport=a[0].last_export||null; } }
+  guardarLocal(); marcarOnline(true); return true;
+}
+async function syncDia(f){
+  try{
+    var r=DB.days[f]||{}, resp;
+    if(Object.keys(r).length===0){
+      resp=await sb("/rest/v1/dias?user_id=eq."+session.user.id+"&fecha=eq."+f,{method:"DELETE"});
+    } else {
+      resp=await sb("/rest/v1/dias?on_conflict=user_id,fecha",{
+        method:"POST", headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify(filaDeDia(f))});
+    }
+    if(!resp.ok) throw 0;
+    quitarPend(f); marcarOnline(true); return true;
+  }catch(e){ marcarPend(f); marcarOnline(false); return false; }
+}
+async function syncAjustes(){
+  try{
+    var resp=await sb("/rest/v1/ajustes?on_conflict=user_id",{
+      method:"POST", headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
+      body:JSON.stringify({user_id:session.user.id, entreno:!!DB.settings.entreno, last_export:DB.lastExport||null})});
+    return resp.ok;
+  }catch(e){ return false; }
+}
+async function syncBatch(){
+  var fs=Object.keys(DB.days).filter(function(f){return Object.keys(DB.days[f]).length;});
+  if(!fs.length) return;
+  try{
+    var resp=await sb("/rest/v1/dias?on_conflict=user_id,fecha",{
+      method:"POST", headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
+      body:JSON.stringify(fs.map(filaDeDia))});
+    if(!resp.ok) fs.forEach(marcarPend);
+  }catch(e){ fs.forEach(marcarPend); }
+}
+async function borrarTodoRemoto(){
+  try{ await sb("/rest/v1/dias?user_id=eq."+session.user.id,{method:"DELETE"});
+       await sb("/rest/v1/ajustes?user_id=eq."+session.user.id,{method:"DELETE"});
+       localStorage.setItem(PEND,"[]"); }catch(e){}
+}
+async function reintentarPend(){
+  if(!session||!session.user) return;
+  var s=pend(); for(var i=0;i<s.length;i++){ await syncDia(s[i]); }
+}
+
+/* ══════════════════════════ guardar (local ya, nube enseguida) ══════════════════════════ */
+var dirty={}, syncT=null;
+function save(){
+  guardarLocal();                 // durable local INMEDIATO: nada se pierde al click
+  if(!session||!session.user) return;
+  dirty[activa]=true;
+  clearTimeout(syncT); syncT=setTimeout(flushDirty,350);
+}
+async function flushDirty(){
+  var dias=Object.keys(dirty); dirty={};
+  for(var i=0;i<dias.length;i++){ await syncDia(dias[i]); }
+  renderAjustesSiVisible();
+}
+function renderAjustesSiVisible(){ if(document.getElementById("v-aj").classList.contains("on")) renderAjustes(); }
+
+/* magic link */
+async function enviarLink(email){
+  var redir=location.origin+location.pathname;
+  var r=await fetch(SB_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(redir),{
+    method:"POST", headers:{"apikey":SB_ANON,"Content-Type":"application/json"},
+    body:JSON.stringify({email:email, create_user:true})});
+  return r.ok;
+}
+function parseHash(){
+  if(location.hash && location.hash.indexOf("access_token")>=0){
+    var p=new URLSearchParams(location.hash.slice(1));
+    if(p.get("access_token")){
+      saveSession({ access_token:p.get("access_token"), refresh_token:p.get("refresh_token"),
+        expires_at: Math.floor(Date.now()/1000)+parseInt(p.get("expires_in")||"3600",10), user:null });
+      history.replaceState(null,"",location.pathname+location.search);
+      return true;
+    }
+  }
+  return false;
+}
+
+/* ══════════════════════════ fechas ══════════════════════════ */
+var DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+var MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function iso(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function parse(s){ var p=s.split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function hoyISO(){ return iso(new Date()); }
+function addDays(s,n){ var d=parse(s); d.setDate(d.getDate()+n); return iso(d); }
+function esLunes(s){ return parse(s).getDay()===1; }
+function esPrimerLunes(s){ var d=parse(s); return d.getDay()===1 && d.getDate()<=7; }
+function fmtLargo(s){
+  var d=parse(s), h=hoyISO();
+  var head = s===h ? "Hoy" : (s===addDays(h,-1) ? "Ayer" : DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1));
+  return {head:head, sub:d.getDate()+" de "+MESES[d.getMonth()]};
+}
+function fmtCorto(s){ var d=parse(s); return d.getDate()+"/"+(d.getMonth()+1); }
+
+/* ══════════════════════════ estado de la vista ══════════════════════════ */
+var activa=hoyISO();
+var modoAtraso=false;
+
+function dia(f){ if(!DB.days[f]) DB.days[f]={}; return DB.days[f]; }
+function tieneBase(r){ return !!r && (r.tos!=null||r.desc!=null||r.can!=null); }
+function completo(r){ return !!r && r.tos!=null && r.desc!=null && r.can!=null; }
+
+/* Días sin ningún dato base, entre el primer registro y ayer. Ventana de 14 días:
+   más atrás que eso ya no es un olvido recuperable, es historia. */
+function faltantes(){
+  var fechas=Object.keys(DB.days).filter(function(f){return tieneBase(DB.days[f]);}).sort();
+  if(!fechas.length) return [];
+  var h=hoyISO(), desde=fechas[0], tope=addDays(h,-14);
+  if(desde<tope) desde=tope;
+  var out=[], f=desde;
+  while(f<h){ if(!tieneBase(DB.days[f])) out.push(f); f=addDays(f,1); }
+  return out;
+}
+
+/* ══════════════════════════ render de la pantalla diaria ══════════════════════════ */
+var CAN=[["no","No"],["vapo","Vaporizado"],["fumado","Fumado"]];
+
+function construirEscalas(){
+  var t=document.getElementById("esc-tos"); t.innerHTML="";
+  for(var i=0;i<=10;i++) t.appendChild(botonEscala(i,"tos"));
+  var d=document.getElementById("esc-desc"); d.innerHTML="";
+  for(var j=1;j<=10;j++) d.appendChild(botonEscala(j,"desc"));
+  var c=document.getElementById("esc-can"); c.innerHTML="";
+  CAN.forEach(function(o){
+    var b=document.createElement("button");
+    b.textContent=o[1]; b.setAttribute("aria-pressed","false"); b.dataset.can=o[0];
+    b.onclick=function(){ setCampo("can",o[0]); };
+    c.appendChild(b);
+  });
+  var e=document.getElementById("esc-ent"); e.innerHTML="";
+  [["si","Sí"],["no","No"]].forEach(function(o){
+    var b=document.createElement("button");
+    b.textContent=o[1]; b.setAttribute("aria-pressed","false"); b.dataset.ent=o[0];
+    b.onclick=function(){ setCampo("ent",o[0]); };
+    e.appendChild(b);
+  });
+}
+function botonEscala(n,campo){
+  var b=document.createElement("button");
+  b.textContent=n; b.setAttribute("aria-pressed","false"); b.dataset.v=n; b.dataset.campo=campo;
+  b.onclick=function(){ setCampo(campo,n); };
+  return b;
+}
+
+function setCampo(campo,val){
+  var r=dia(activa);
+  r[campo]=val;               // tocar otro botón simplemente reemplaza: siempre editable
+  save();
+  pintarSeleccion();
+  toast("Guardado");
+  if(modoAtraso && completo(r)) setTimeout(siguienteAtraso,340);
+}
+
+function pintarSeleccion(){
+  var r=DB.days[activa]||{};
+  document.querySelectorAll('#esc-tos button').forEach(function(b){
+    b.setAttribute("aria-pressed", String(r.tos===+b.dataset.v));
+  });
+  document.querySelectorAll('#esc-desc button').forEach(function(b){
+    b.setAttribute("aria-pressed", String(r.desc===+b.dataset.v));
+  });
+  document.querySelectorAll('#esc-can button').forEach(function(b){
+    b.setAttribute("aria-pressed", String(r.can===b.dataset.can));
+  });
+  document.querySelectorAll('#esc-ent button').forEach(function(b){
+    b.setAttribute("aria-pressed", String(r.ent===b.dataset.ent));
+  });
+}
+
+function renderExtras(){
+  var wrap=document.getElementById("extras"); wrap.innerHTML="";
+  var r=DB.days[activa]||{};
+  var lunes=esLunes(activa), primero=esPrimerLunes(activa);
+  wrap.hidden=!lunes;
+  if(!lunes) return;
+  var row=document.createElement("div"); row.className="extrasRow";
+  row.appendChild(campoNum("peso","Peso","kg",r.peso,"0.1"));
+  if(primero) row.appendChild(campoNum("cintura","Cintura","cm",r.cintura,"0.5"));
+  wrap.appendChild(row);
+  if(primero){
+    var h=document.createElement("div"); h.className="hint";
+    h.textContent="Cintura: a la altura del ombligo.";
+    wrap.appendChild(h);
+  }
+}
+function campoNum(campo,label,unidad,val,step){
+  var d=document.createElement("div"); d.className="campo";
+  var l=document.createElement("label"); l.textContent=label; l.htmlFor="in-"+campo;
+  var i=document.createElement("input");
+  i.type="number"; i.inputMode="decimal"; i.step=step; i.id="in-"+campo;
+  i.value=(val==null?"":val); i.placeholder="—";
+  i.onchange=i.oninput=function(){
+    var v=i.value.trim();
+    if(v===""){ delete dia(activa)[campo]; } else { var n=parseFloat(v); if(isNaN(n))return; dia(activa)[campo]=n; }
+    save(); toast("Guardado");
+  };
+  var u=document.createElement("span"); u.className="u"; u.textContent=unidad;
+  d.appendChild(l); d.appendChild(i); d.appendChild(u);
+  return d;
+}
+
+function volverHoyBtn(el){
+  var b=document.createElement("button"); b.textContent="Volver a hoy";
+  b.onclick=function(){ modoAtraso=false; activa=hoyISO(); renderDia(); };
+  el.appendChild(b);
+}
+function renderAviso(){
+  var el=document.getElementById("aviso");
+  if(modoAtraso){
+    var quedan=faltantes().length;
+    el.hidden=false; el.className="aviso atras";
+    el.innerHTML='<span>Cargando atrasados'+(quedan>1?' · quedan '+quedan:'')+'</span>';
+    volverHoyBtn(el); return;
+  }
+  if(activa!==hoyISO()){                        // día pasado elegido a mano
+    el.hidden=false; el.className="aviso atras";
+    var fp=fmtLargo(activa);
+    el.innerHTML='<span>Registrando <b>'+fp.head.toLowerCase()+'</b> · '+fp.sub+'</span>';
+    volverHoyBtn(el); return;
+  }
+  var f=faltantes();
+  if(!f.length){ el.hidden=true; return; }
+  el.hidden=false; el.className="aviso";
+  el.innerHTML='<span>Te '+(f.length===1?"falta <b>1 día</b>":"faltan <b>"+f.length+" días</b>")+'</span>';
+  var b=document.createElement("button"); b.textContent="Cargar";
+  b.onclick=function(){ modoAtraso=true; activa=f[0]; renderDia(); };
+  el.appendChild(b);
+}
+function siguienteAtraso(){
+  var f=faltantes();
+  if(f.length){ activa=f[0]; renderDia(); toast("Listo · siguiente día"); }
+  else { modoAtraso=false; activa=hoyISO(); renderDia(); toast("Días completos"); }
+}
+
+function renderDia(){
+  var f=fmtLargo(activa);
+  document.getElementById("fechaTxt").innerHTML=f.head+"<small>"+f.sub+"</small>";
+  document.getElementById("diaNext").disabled = activa>=hoyISO();
+  document.getElementById("blk-entreno").hidden=!DB.settings.entreno;
+  pintarSeleccion(); renderExtras(); renderAviso();
+  var r=DB.days[activa]||{};
+  var nota=document.getElementById("nota"), wrap=document.getElementById("notaWrap");
+  nota.value=r.nota||"";
+  var abierta=!!r.nota;
+  wrap.classList.toggle("on",abierta);
+  document.getElementById("notaToggle").textContent=abierta?"nota":"+ nota";
+  document.getElementById("notaToggle").hidden=abierta;
+}
+
+document.getElementById("notaToggle").onclick=function(){
+  document.getElementById("notaWrap").classList.add("on");
+  this.hidden=true;
+  document.getElementById("nota").focus();
+};
+document.getElementById("nota").oninput=function(){
+  var v=this.value.trim();
+  if(v) dia(activa).nota=v; else if(DB.days[activa]) delete DB.days[activa].nota;
+  save();
+};
+document.getElementById("nota").onblur=function(){ if(this.value.trim()) toast("Guardado"); };
+
+/* ══════════════════════════ toast ══════════════════════════ */
+var toastT;
+function toast(txt){
+  var el=document.getElementById("toast");
+  document.getElementById("toastTxt").textContent=txt||"Guardado";
+  el.classList.add("on"); clearTimeout(toastT);
+  toastT=setTimeout(function(){ el.classList.remove("on"); },1100);
+}
+
+/* ══════════════════════════ navegación ══════════════════════════ */
+function ver(id){
+  document.querySelectorAll(".view").forEach(function(v){ v.classList.toggle("on",v.id===id); });
+  if(id==="v-tend") renderTendencia();
+  if(id==="v-aj") renderAjustes();
+}
+document.getElementById("goTend").onclick=function(){ ver("v-tend"); };
+document.getElementById("goAj").onclick=function(){ ver("v-aj"); };
+document.querySelectorAll("[data-back]").forEach(function(b){
+  b.onclick=function(){ renderDia(); ver("v-hoy"); };
+});
+
+/* ── navegación por fecha: registrar cualquier día pasado ── */
+function irAFecha(f){
+  if(f>hoyISO()) f=hoyISO();      // nunca al futuro
+  activa=f; modoAtraso=false; renderDia();
+}
+document.getElementById("diaPrev").onclick=function(){ irAFecha(addDays(activa,-1)); };
+document.getElementById("diaNext").onclick=function(){ if(activa<hoyISO()) irAFecha(addDays(activa,1)); };
+var datePick=document.getElementById("datePick");
+document.getElementById("fechaBtn").onclick=function(){
+  datePick.max=hoyISO(); datePick.value=activa;
+  if(datePick.showPicker){ try{ datePick.showPicker(); return; }catch(e){} }
+  datePick.focus(); datePick.click();
+};
+datePick.onchange=function(){ if(this.value) irAFecha(this.value); };
+
+/* ══════════════════════════ tendencia ══════════════════════════ */
+var COL={tos:"#3987e5",desc:"#008300",vapo:"#c98500",fumado:"#d55181",
+         muted:"#898781",grid:"#2c2c2a",axis:"#383835",ink:"#ffffff",ink2:"#c3c2b7"};
+
+function serie(campo){
+  return Object.keys(DB.days).filter(function(f){ return DB.days[f][campo]!=null; }).sort();
+}
+function prom(fechas,campo){
+  var s=0,n=0;
+  fechas.forEach(function(f){ var v=DB.days[f]&&DB.days[f][campo]; if(v!=null){s+=v;n++;} });
+  return n? {v:s/n,n:n} : {v:null,n:0};
+}
+function rangoFechas(desde,hasta){ var o=[],f=desde; while(f<=hasta){o.push(f);f=addDays(f,1);} return o; }
+
+function renderTendencia(){
+  var body=document.getElementById("tendBody");
+  var conDatos=Object.keys(DB.days).filter(function(f){return tieneBase(DB.days[f]);}).sort();
+  if(conDatos.length<2){
+    body.innerHTML='<div class="vacio">Todavía no hay suficientes días cargados.<br>'+
+      'Con dos o tres días ya vas a ver la primera línea.</div>';
+    return;
+  }
+  body.innerHTML="";
+
+  /* ---- la pregunta: ¿baja la tos en los días sin fumar? ---- */
+  var porCat={no:[],vapo:[],fumado:[]};
+  conDatos.forEach(function(f){
+    var r=DB.days[f];
+    if(r.can&&r.tos!=null) porCat[r.can].push(r.tos);
+  });
+  var cats=CAN.filter(function(c){ return porCat[c[0]].length>=3; });
+  if(cats.length>=2){
+    var h=document.createElement("h3"); h.textContent="Tos promedio según cannabis"; h.style.marginTop="4px";
+    body.appendChild(h);
+    var card=document.createElement("div"); card.className="card";
+    var vals=cats.map(function(c){
+      var a=porCat[c[0]]; return a.reduce(function(x,y){return x+y;},0)/a.length;
+    });
+    var max=Math.max.apply(null,vals)||1;
+    cats.forEach(function(c,i){
+      var row=document.createElement("div"); row.className="brow";
+      var col=c[0]==="no"?COL.muted:(c[0]==="vapo"?COL.vapo:COL.fumado);
+      row.innerHTML='<span style="color:var(--ink-2)">'+c[1]+'</span>'+
+        '<span class="barra" style="background:'+col+';width:'+Math.max(4,(vals[i]/max)*100)+'%"></span>'+
+        '<span class="n">'+vals[i].toFixed(1)+' <span style="color:var(--muted);font-weight:400">· '+porCat[c[0]].length+'d</span></span>';
+      card.appendChild(row);
+    });
+    var nota=document.createElement("div");
+    nota.style.cssText="font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.45";
+    var sinFumar=porCat.no, fum=porCat.fumado;
+    if(sinFumar.length>=3&&fum.length>=3){
+      var a=sinFumar.reduce(function(x,y){return x+y;},0)/sinFumar.length;
+      var b=fum.reduce(function(x,y){return x+y;},0)/fum.length;
+      var dif=b-a;
+      nota.textContent = Math.abs(dif)<0.3
+        ? "Sin diferencia clara entre días sin cannabis y días fumados."
+        : (dif>0 ? "La tos es "+dif.toFixed(1)+" puntos más alta los días fumados."
+                 : "La tos es "+Math.abs(dif).toFixed(1)+" puntos más baja los días fumados.");
+    } else {
+      nota.textContent="Promedio simple, sin ajustar por otros factores.";
+    }
+    card.appendChild(nota);
+    body.appendChild(card);
+  }
+
+  /* ---- gráfico tos + descanso ---- */
+  var h2=document.createElement("h3"); h2.textContent="Tos y descanso en el tiempo"; body.appendChild(h2);
+  var card2=document.createElement("div"); card2.className="card wrapRel";
+  var cv=document.createElement("canvas"); card2.appendChild(cv);
+  var tip=document.createElement("div"); tip.id="tip"; card2.appendChild(tip);
+  var leg=document.createElement("div"); leg.className="leyenda";
+  leg.innerHTML=
+    '<span><i class="sw line" style="background:'+COL.tos+'"></i>Tos</span>'+
+    '<span><i class="sw line" style="background:'+COL.desc+'"></i>Descanso</span>'+
+    '<span><i class="sw" style="border:2px solid '+COL.muted+';background:none"></i>Sin cannabis</span>'+
+    '<span><i class="sw" style="background:'+COL.vapo+'"></i>Vaporizado</span>'+
+    '<span><i class="sw" style="background:'+COL.fumado+'"></i>Fumado</span>';
+  card2.appendChild(leg);
+  body.appendChild(card2);
+  dibujarLineas(cv,tip,conDatos[0],conDatos[conDatos.length-1]);
+
+  /* ---- promedios ---- */
+  var h3=document.createElement("h3"); h3.textContent="Promedios"; body.appendChild(h3);
+  var hoy=hoyISO();
+  var v7=rangoFechas(addDays(hoy,-6),hoy), p7=rangoFechas(addDays(hoy,-13),addDays(hoy,-7));
+  var todo=conDatos;
+  var tiles=document.createElement("div"); tiles.className="tiles";
+  [["Últimos 7 d",v7],["7 previos",p7],["Total",todo]].forEach(function(p){
+    var t=document.createElement("div"); t.className="tile";
+    var a=prom(p[1],"tos"), b=prom(p[1],"desc");
+    t.innerHTML='<div class="lbl">'+p[0]+'</div>'+
+      '<div class="val" style="color:'+COL.tos+'">'+(a.v==null?"—":a.v.toFixed(1))+'</div>'+
+      '<div class="tileRow"><i class="sw line" style="background:'+COL.desc+'"></i>'+(b.v==null?"—":b.v.toFixed(1))+'</div>'+
+      '<div class="tileRow" style="color:var(--muted)">'+(a.n||0)+' día'+(a.n===1?"":"s")+'</div>';
+    tiles.appendChild(t);
+  });
+  body.appendChild(tiles);
+  var pie=document.createElement("div");
+  pie.style.cssText="font-size:12px;color:var(--muted);margin-top:7px";
+  pie.innerHTML='Número grande = tos. Debajo, descanso.';
+  body.appendChild(pie);
+
+  /* ---- peso ---- */
+  var fp=serie("peso");
+  if(fp.length>=2){
+    var h4=document.createElement("h3"); h4.textContent="Peso"; body.appendChild(h4);
+    var card3=document.createElement("div"); card3.className="card wrapRel";
+    var cv2=document.createElement("canvas"); card3.appendChild(cv2);
+    var lg=document.createElement("div"); lg.className="leyenda";
+    var d0=DB.days[fp[0]].peso, d1=DB.days[fp[fp.length-1]].peso, dd=d1-d0;
+    lg.innerHTML='<span style="color:var(--muted)">'+fp.length+' mediciones · '+
+      (dd===0?"sin cambio":(dd>0?"+":"")+dd.toFixed(1)+" kg desde "+fmtCorto(fp[0]))+'</span>';
+    card3.appendChild(lg);
+    body.appendChild(card3);
+    dibujarPeso(cv2,fp);
+  }
+
+  var fc=serie("cintura");
+  if(fc.length>=1){
+    var h5=document.createElement("h3"); h5.textContent="Cintura"; body.appendChild(h5);
+    var c5=document.createElement("div"); c5.className="card";
+    c5.innerHTML=fc.map(function(f){
+      return '<div class="brow" style="grid-template-columns:1fr auto"><span style="color:var(--ink-2)">'+
+        fmtCorto(f)+'</span><span class="n">'+DB.days[f].cintura+' cm</span></div>';
+    }).join("");
+    body.appendChild(c5);
+  }
+}
+
+function setupCanvas(cv,hCss){
+  var w=cv.parentNode.clientWidth-24;
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.style.height=hCss+"px";
+  cv.width=Math.round(w*dpr); cv.height=Math.round(hCss*dpr);
+  var g=cv.getContext("2d"); g.scale(dpr,dpr);
+  g.textBaseline="middle";
+  return {g:g,w:w,h:hCss};
+}
+
+function dibujarLineas(cv,tip,desde,hasta){
+  var c=setupCanvas(cv,240), g=c.g, W=c.w, H=c.h;
+  var L=26,R=6,T=10,B=50;
+  var fechas=rangoFechas(desde,hasta), N=fechas.length;
+  var pw=W-L-R, ph=H-T-B;
+  var x=function(i){ return N===1? L+pw/2 : L+(i/(N-1))*pw; };
+  var y=function(v){ return T+ph-(v/10)*ph; };
+
+  /* grilla */
+  g.strokeStyle=COL.grid; g.lineWidth=1;
+  g.fillStyle=COL.muted; g.font="10px system-ui,sans-serif"; g.textAlign="right";
+  [0,5,10].forEach(function(v){
+    var yy=Math.round(y(v))+0.5;
+    g.beginPath(); g.moveTo(L,yy); g.lineTo(W-R,yy); g.stroke();
+    g.fillText(String(v),L-5,y(v));
+  });
+
+  /* líneas: los huecos NO se interpolan, se cortan */
+  function traza(campo,color){
+    g.strokeStyle=color; g.lineWidth=2; g.lineJoin="round"; g.lineCap="round";
+    var abierto=false;
+    g.beginPath();
+    fechas.forEach(function(f,i){
+      var v=DB.days[f]&&DB.days[f][campo];
+      if(v==null){ abierto=false; return; }
+      if(!abierto){ g.moveTo(x(i),y(v)); abierto=true; } else { g.lineTo(x(i),y(v)); }
+    });
+    g.stroke();
+    if(N<=20){
+      g.fillStyle=color;
+      fechas.forEach(function(f,i){
+        var v=DB.days[f]&&DB.days[f][campo];
+        if(v==null) return;
+        g.beginPath(); g.arc(x(i),y(v),3.2,0,6.284); g.fill();
+      });
+    }
+  }
+  traza("desc",COL.desc);
+  traza("tos",COL.tos);
+
+  /* eje + banda de cannabis */
+  var yBase=T+ph+0.5;
+  g.strokeStyle=COL.axis; g.beginPath(); g.moveTo(L,yBase); g.lineTo(W-R,yBase); g.stroke();
+  var yCan=yBase+16;
+  fechas.forEach(function(f,i){
+    var r=DB.days[f]; if(!r||!r.can) return;
+    var xx=x(i);
+    if(r.can==="no"){
+      g.strokeStyle=COL.muted; g.lineWidth=1.6;
+      g.beginPath(); g.arc(xx,yCan,3.4,0,6.284); g.stroke();
+    } else {
+      g.fillStyle=r.can==="vapo"?COL.vapo:COL.fumado;
+      g.beginPath(); g.arc(xx,yCan,4.2,0,6.284); g.fill();
+    }
+  });
+
+  /* fechas extremas */
+  g.fillStyle=COL.muted; g.font="10px system-ui,sans-serif";
+  g.textAlign="left";  g.fillText(fmtCorto(desde),L,H-8);
+  g.textAlign="right"; g.fillText(fmtCorto(hasta),W-R,H-8);
+
+  /* crosshair al tocar */
+  var overlay=null;
+  function mostrar(px){
+    var i=N===1?0:Math.round(((px-L)/pw)*(N-1));
+    i=Math.max(0,Math.min(N-1,i));
+    var f=fechas[i], r=DB.days[f]||{};
+    if(!overlay){
+      overlay=document.createElement("div");
+      overlay.style.cssText="position:absolute;top:12px;width:1px;background:"+COL.axis+";pointer-events:none";
+      cv.parentNode.appendChild(overlay);
+    }
+    overlay.style.height=(ph+22)+"px";
+    overlay.style.left=(12+x(i))+"px";
+    var can=r.can?({no:"sin cannabis",vapo:"vaporizado",fumado:"fumado"})[r.can]:"—";
+    tip.innerHTML="<b>"+fmtCorto(f)+"</b> · tos "+(r.tos!=null?r.tos:"—")+" · desc "+(r.desc!=null?r.desc:"—")+"<br>"+can;
+    tip.style.opacity="1";
+    var tw=tip.offsetWidth||120;
+    tip.style.left=Math.max(12,Math.min(W-tw+12,12+x(i)-tw/2))+"px";
+    tip.style.top="10px";
+  }
+  function ocultar(){ tip.style.opacity="0"; if(overlay) overlay.style.left="-99px"; }
+  cv.addEventListener("pointerdown",function(e){ mostrar(e.offsetX); });
+  cv.addEventListener("pointermove",function(e){ if(e.buttons||e.pointerType==="mouse") mostrar(e.offsetX); });
+  cv.addEventListener("pointerup",ocultar);
+  cv.addEventListener("pointerleave",ocultar);
+}
+
+function dibujarPeso(cv,fp){
+  var c=setupCanvas(cv,130), g=c.g, W=c.w, H=c.h;
+  var L=32,R=8,T=12,B=24, pw=W-L-R, ph=H-T-B;
+  var vals=fp.map(function(f){ return DB.days[f].peso; });
+  var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+  if(mx-mn<1){ mn-=0.5; mx+=0.5; }
+  var pad=(mx-mn)*0.15; mn-=pad; mx+=pad;
+  var d0=parse(fp[0]).getTime(), d1=parse(fp[fp.length-1]).getTime();
+  var x=function(f){ return d1===d0? L+pw/2 : L+((parse(f).getTime()-d0)/(d1-d0))*pw; };
+  var y=function(v){ return T+ph-((v-mn)/(mx-mn))*ph; };
+
+  g.strokeStyle=COL.grid; g.lineWidth=1;
+  g.fillStyle=COL.muted; g.font="10px system-ui,sans-serif"; g.textAlign="right";
+  [mx,mn].forEach(function(v){
+    var yy=Math.round(y(v))+0.5;
+    g.beginPath(); g.moveTo(L,yy); g.lineTo(W-R,yy); g.stroke();
+    g.fillText(v.toFixed(1),L-5,y(v));
+  });
+  g.strokeStyle=COL.tos; g.lineWidth=2; g.lineJoin="round"; g.beginPath();
+  fp.forEach(function(f,i){ i? g.lineTo(x(f),y(DB.days[f].peso)) : g.moveTo(x(f),y(DB.days[f].peso)); });
+  g.stroke();
+  g.fillStyle=COL.tos;
+  fp.forEach(function(f){ g.beginPath(); g.arc(x(f),y(DB.days[f].peso),3.4,0,6.284); g.fill(); });
+  g.fillStyle=COL.muted; g.textAlign="left"; g.fillText(fmtCorto(fp[0]),L,H-8);
+  g.textAlign="right"; g.fillText(fmtCorto(fp[fp.length-1]),W-R,H-8);
+}
+
+/* ══════════════════════════ ajustes ══════════════════════════ */
+function renderAjustes(){
+  document.getElementById("tgEntreno").setAttribute("aria-pressed",String(!!DB.settings.entreno));
+  var fs=Object.keys(DB.days).filter(function(f){return tieneBase(DB.days[f]);}).sort();
+  document.getElementById("statDias").textContent = fs.length
+    ? fs.length+" día"+(fs.length===1?"":"s")+" cargado"+(fs.length===1?"":"s") : "Sin datos";
+  document.getElementById("statRango").textContent = fs.length
+    ? "Desde el "+fmtCorto(fs[0])+" hasta el "+fmtCorto(fs[fs.length-1]) : "";
+  var be=document.getElementById("backupEstado");
+  if(DB.lastExport){
+    var dd=Math.floor((parse(hoyISO()).getTime()-parse(DB.lastExport).getTime())/86400000);
+    be.innerHTML="Última exportación: <b>"+(dd===0?"hoy":dd+" día"+(dd===1?"":"s")+" atrás")+"</b>"+
+      (dd>=7?" — conviene bajar el CSV de nuevo.":"");
+  } else be.innerHTML="Todavía no exportaste nunca.";
+  document.getElementById("statEmail").textContent=(session&&session.user&&session.user.email)||"—";
+  var np=pend().length;
+  if(np) be.innerHTML+=(be.innerHTML?"<br>":"")+"<b style=\"color:var(--vapo)\">"+np+" día"+(np===1?"":"s")+" sin subir</b> — se reintenta solo al reabrir con conexión.";
+}
+document.getElementById("tgEntreno").onclick=function(){
+  DB.settings.entreno=!DB.settings.entreno; guardarLocal(); syncAjustes();
+  this.setAttribute("aria-pressed",String(DB.settings.entreno));
+  document.getElementById("blk-entreno").hidden=!DB.settings.entreno;
+  toast(DB.settings.entreno?"Activado":"Desactivado");
+};
+
+/* ══════════════════════════ CSV ══════════════════════════ */
+var COLS=["fecha","tos","descanso","cannabis","peso","cintura","entrenamiento","nota"];
+function esc(v){
+  if(v==null||v==="") return "";
+  var s=String(v);
+  return /[",\n;]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function csv(){
+  var fs=Object.keys(DB.days).filter(function(f){return Object.keys(DB.days[f]).length;}).sort();
+  var out=[COLS.join(",")];
+  fs.forEach(function(f){
+    var r=DB.days[f];
+    out.push([f,r.tos,r.desc,r.can,r.peso,r.cintura,r.ent,r.nota].map(esc).join(","));
+  });
+  return out.join("\r\n");
+}
+document.getElementById("btnCsv").onclick=function(){
+  var fs=Object.keys(DB.days);
+  if(!fs.length){ toast("No hay datos"); return; }
+  var blob=new Blob(["﻿"+csv()],{type:"text/csv;charset=utf-8"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="registro_"+hoyISO()+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },2000);
+  DB.lastExport=hoyISO(); guardarLocal(); syncAjustes(); renderAjustes(); toast("CSV descargado");
+};
+
+function resumen(){
+  var fs=Object.keys(DB.days).filter(function(f){return tieneBase(DB.days[f]);}).sort();
+  var L=["# Registro de salud","","Días cargados: "+fs.length+
+    (fs.length?" ("+fs[0]+" → "+fs[fs.length-1]+")":""),""];
+  L.push("| fecha | tos | descanso | cannabis | peso | cintura | entren. | nota |");
+  L.push("|---|---|---|---|---|---|---|---|");
+  fs.forEach(function(f){
+    var r=DB.days[f];
+    L.push("| "+[f,r.tos,r.desc,r.can,r.peso,r.cintura,r.ent,r.nota]
+      .map(function(v){ return v==null||v===""?"—":String(v).replace(/\|/g,"/"); }).join(" | ")+" |");
+  });
+  var hoy=hoyISO();
+  var g=[["Últimos 7 días",rangoFechas(addDays(hoy,-6),hoy)],
+         ["7 días previos",rangoFechas(addDays(hoy,-13),addDays(hoy,-7))],
+         ["Total",fs]];
+  L.push("","## Promedios","");
+  L.push("| período | tos | descanso | n |");
+  L.push("|---|---|---|---|");
+  g.forEach(function(p){
+    var a=prom(p[1],"tos"), b=prom(p[1],"desc");
+    L.push("| "+p[0]+" | "+(a.v==null?"—":a.v.toFixed(1))+" | "+(b.v==null?"—":b.v.toFixed(1))+" | "+a.n+" |");
+  });
+  var porCat={no:[],vapo:[],fumado:[]};
+  fs.forEach(function(f){ var r=DB.days[f]; if(r.can&&r.tos!=null) porCat[r.can].push(r.tos); });
+  var alguna=CAN.some(function(c){ return porCat[c[0]].length>0; });
+  if(alguna){
+    L.push("","## Tos promedio según cannabis","");
+    L.push("| cannabis | tos | días |");
+    L.push("|---|---|---|");
+    CAN.forEach(function(c){
+      var a=porCat[c[0]];
+      if(!a.length) return;
+      L.push("| "+c[1]+" | "+(a.reduce(function(x,y){return x+y;},0)/a.length).toFixed(1)+" | "+a.length+" |");
+    });
+  }
+  L.push("","Escalas: tos 0 (nada) a 10 (constante) · descanso 1 (pésimo) a 10 (excelente).");
+  return L.join("\n");
+}
+document.getElementById("btnCopy").onclick=function(){
+  var txt=resumen();
+  function fallback(){
+    var ta=document.createElement("textarea");
+    ta.value=txt; ta.style.cssText="position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+    ta.remove(); toast(ok?"Resumen copiado":"No se pudo copiar");
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast("Resumen copiado"); },fallback);
+  } else fallback();
+};
+
+/* Parser CSV con soporte de comillas (RFC 4180) */
+function parseCSV(txt){
+  txt=txt.replace(/^﻿/,"");
+  var filas=[],campo="",fila=[],q=false;
+  for(var i=0;i<txt.length;i++){
+    var c=txt[i];
+    if(q){
+      if(c==='"'){ if(txt[i+1]==='"'){campo+='"';i++;} else q=false; }
+      else campo+=c;
+    } else if(c==='"'){ q=true; }
+    else if(c===","){ fila.push(campo); campo=""; }
+    else if(c==="\n"){ fila.push(campo); filas.push(fila); fila=[]; campo=""; }
+    else if(c!=="\r"){ campo+=c; }
+  }
+  if(campo!==""||fila.length){ fila.push(campo); filas.push(fila); }
+  return filas.filter(function(f){ return f.some(function(x){return x.trim()!=="";}); });
+}
+document.getElementById("btnImport").onclick=function(){ document.getElementById("fileCsv").click(); };
+document.getElementById("fileCsv").onchange=function(){
+  var f=this.files&&this.files[0]; if(!f) return;
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var filas=parseCSV(String(fr.result));
+      if(filas.length<2){ toast("CSV vacío"); return; }
+      var head=filas[0].map(function(h){return h.trim().toLowerCase();});
+      var ix={}; COLS.forEach(function(c){ ix[c]=head.indexOf(c); });
+      if(ix.fecha<0){ toast("Falta la columna fecha"); return; }
+      var n=0;
+      for(var i=1;i<filas.length;i++){
+        var r=filas[i], fe=(r[ix.fecha]||"").trim();
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(fe)) continue;
+        var o={};
+        function num(k,dst){ var v=ix[k]>=0?(r[ix[k]]||"").trim():""; if(v!==""&&!isNaN(parseFloat(v))) o[dst]=parseFloat(v); }
+        num("tos","tos"); num("descanso","desc"); num("peso","peso"); num("cintura","cintura");
+        var can=ix.cannabis>=0?(r[ix.cannabis]||"").trim().toLowerCase():"";
+        if(can==="no"||can==="vapo"||can==="fumado") o.can=can;
+        var ent=ix.entrenamiento>=0?(r[ix.entrenamiento]||"").trim().toLowerCase():"";
+        if(ent==="si"||ent==="sí"||ent==="no") o.ent=(ent==="sí"?"si":ent);
+        var nota=ix.nota>=0?(r[ix.nota]||"").trim():"";
+        if(nota) o.nota=nota;
+        if(Object.keys(o).length){ DB.days[fe]=o; n++; }
+      }
+      guardarLocal(); syncBatch(); renderDia(); renderAjustes();
+      toast(n?("Importados "+n+" días"):"Nada para importar");
+    }catch(e){ toast("CSV no válido"); }
+  };
+  fr.readAsText(f);
+  this.value="";
+};
+
+document.getElementById("btnBorrar").onclick=function(){
+  if(!confirm("Se borran TODOS los registros de este navegador. ¿Descargaste el CSV?\n\nEsto no se puede deshacer.")) return;
+  if(!confirm("Confirmá una vez más: borrar todo.")) return;
+  DB={v:2,settings:{entreno:false},days:{},lastExport:null};
+  guardarLocal(); borrarTodoRemoto(); modoAtraso=false; activa=hoyISO();
+  renderDia(); renderAjustes(); ver("v-hoy"); toast("Datos borrados");
+};
+
+/* ══════════════════════════ arranque ══════════════════════════ */
+function mostrarLogin(){ ver("v-login"); }
+function mostrarApp(){ ver("v-hoy"); }
+
+document.getElementById("loginBtn").onclick=async function(){
+  var email=(document.getElementById("loginEmail").value||"").trim().toLowerCase();
+  var msg=document.getElementById("loginMsg");
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.className="loginmsg"; msg.textContent="Escribí un mail válido."; return; }
+  this.disabled=true; msg.className="loginmsg"; msg.textContent="Enviando…";
+  var ok=false; try{ ok=await enviarLink(email); }catch(e){}
+  this.disabled=false;
+  if(ok){ msg.className="loginmsg ok"; msg.textContent="Listo. Te mandé un enlace a "+email+". Abrilo DESDE ESTE dispositivo para entrar (mirá también spam)."; }
+  else { msg.className="loginmsg"; msg.textContent="No se pudo enviar (puede ser el límite de mails por hora). Esperá unos minutos y reintentá."; }
+};
+document.getElementById("loginEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+
+document.getElementById("btnLogout").onclick=function(){
+  if(!confirm("¿Cerrar sesión en este dispositivo? Tus datos siguen guardados en la nube.")) return;
+  clearSession(); toast("Sesión cerrada"); mostrarLogin();
+};
+
+async function arranque(){
+  loadSession();
+  parseHash();
+  cargarCache();
+  construirEscalas();
+  renderDia();
+  if(session){
+    mostrarApp();
+    if(!session.user){ try{ await fetchUser(); }catch(e){} }
+    try{ await reintentarPend(); await pullTodo(); }
+    catch(e){ /* sin conexión: seguimos con el cache local, se sincroniza después */ }
+    renderDia();
+  } else {
+    mostrarLogin();
+  }
+}
+arranque();
+
+/* al volver a la app: reintentar lo pendiente y refrescar el día si cambió */
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible") return;
+  reintentarPend();
+  if(!modoAtraso && activa!==hoyISO()){ activa=hoyISO(); renderDia(); }
+});
+window.addEventListener("online",function(){ reintentarPend(); });
+window.addEventListener("resize",function(){
+  if(document.getElementById("v-tend").classList.contains("on")) renderTendencia();
+});
+</script>
+</body>
+</html>
