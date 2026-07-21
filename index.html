@@ -396,6 +396,9 @@ async function pullTodo(){
     if(x.nota!=null)o.nota=x.nota;
     if(Object.keys(o).length) days[x.fecha]=o;
   });
+  // nunca pisar días con cambios locales todavía sin subir
+  var proteger=Object.keys(dirty).concat(pend());
+  proteger.forEach(function(f){ if(DB.days[f]&&Object.keys(DB.days[f]).length) days[f]=DB.days[f]; });
   DB.days=days;
   var ra=await sb("/rest/v1/ajustes?select=*");
   if(ra.ok){ var a=await ra.json(); if(a[0]){ DB.settings.entreno=!!a[0].entreno; DB.lastExport=a[0].last_export||null; } }
@@ -447,7 +450,7 @@ async function reintentarPend(){
 var dirty={}, syncT=null;
 function save(){
   guardarLocal();                 // durable local INMEDIATO: nada se pierde al click
-  if(!session||!session.user) return;
+  if(!session) return;            // sin identidad aún: syncDia lo marcará pendiente y se sube después
   dirty[activa]=true;
   clearTimeout(syncT); syncT=setTimeout(flushDirty,350);
 }
@@ -1145,15 +1148,12 @@ async function arranque(){
   cargarCache();
   construirEscalas();
   renderDia();
-  if(session){
-    mostrarApp();
-    if(!session.user){ try{ await fetchUser(); }catch(e){} }
-    try{ await reintentarPend(); await pullTodo(); }
-    catch(e){ /* sin conexión: seguimos con el cache local, se sincroniza después */ }
-    renderDia();
-  } else {
-    mostrarLogin();
-  }
+  if(!session){ mostrarLogin(); return; }
+  if(!session.user){ try{ await fetchUser(); }catch(e){} }   // identidad lista ANTES de editar
+  mostrarApp();
+  renderDia();
+  try{ await reintentarPend(); await pullTodo(); renderDia(); }
+  catch(e){ /* sin conexión: seguimos con el cache local, se sincroniza después */ }
 }
 arranque();
 
