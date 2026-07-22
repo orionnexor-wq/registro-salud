@@ -466,7 +466,7 @@ async function enviarLink(email){
   var redir=location.origin+location.pathname;
   var r=await fetch(SB_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(redir),{
     method:"POST", headers:{"apikey":SB_ANON,"Content-Type":"application/json"},
-    body:JSON.stringify({email:email, create_user:true})});
+    body:JSON.stringify({email:email, create_user:false})});
   return r.ok;
 }
 function parseHash(){
