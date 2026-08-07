@@ -248,6 +248,10 @@ canvas{display:block;width:100%;touch-action:pan-y}
       <div class="tres" id="esc-can"></div>
     </div>
 
+    <!-- Tarjetas del protocolo activo (saliva, moco, gusto…). Se arman solas
+         desde la tabla `protocolos`: alta de una variable nueva = INSERT. -->
+    <div id="protoCards"></div>
+
     <div class="card2" id="blk-entreno" hidden>
       <div class="cardhead"><span class="q">Entrenamiento</span><i class="chk" id="chk-ent">✓</i></div>
       <div class="tres" id="esc-ent" style="grid-template-columns:repeat(2,1fr)"></div>
@@ -392,9 +396,13 @@ function setCloud(state){
 function g(v){ return v==null?null:v; }
 function filaDeDia(f){
   var r=DB.days[f]||{};
-  return { user_id:session.user.id, fecha:f, tos_am:g(r.tos_am), tos_pm:g(r.tos_pm),
+  var fila={ user_id:session.user.id, fecha:f, tos_am:g(r.tos_am), tos_pm:g(r.tos_pm),
     descanso:g(r.desc), cannabis:r.can||null, peso:g(r.peso), cintura:g(r.cintura),
     entrenamiento:r.ent||null, nota:r.nota||null };
+  // `extra` solo viaja si hay algo cargado acá: mandar {} vacío pisaría en la nube
+  // lo que se haya guardado desde otro lado y todavía no bajamos.
+  if(r.extra && Object.keys(r.extra).length) fila.extra=r.extra;
+  return fila;
 }
 async function pullTodo(){
   var r=await sb("/rest/v1/dias?select=*");
@@ -614,10 +622,14 @@ function actualizarChip(){
   var r=DB.days[activa]||{};
   var campos=["tos_am","tos_pm","desc","can"], n=0;
   campos.forEach(function(c){ if(r[c]!=null) n++; });
+  // Las variables del protocolo cuentan igual que las de siempre: si no, el chip
+  // diría "completo" con media pantalla sin cargar.
+  var ex=r.extra||{}, extras=varsSinColumna(), total=4+extras.length;
+  extras.forEach(function(v){ if(ex[v.key]!=null) n++; });
   var el=document.getElementById("chipDia");
   var etq = activa===hoyISO()?"Hoy":fmtLargo(activa).head;
-  if(n===4){ el.className="chipDia full"; el.innerHTML=etq+' completo ✓'; }
-  else { el.className="chipDia"; el.innerHTML=etq+' <span class="big">'+n+'/4</span>'; }
+  if(n===total){ el.className="chipDia full"; el.innerHTML=etq+' completo ✓'; }
+  else { el.className="chipDia"; el.innerHTML=etq+' <span class="big">'+n+'/'+total+'</span>'; }
 }
 
 function renderExtras(){
@@ -650,6 +662,73 @@ function campoNum(campo,label,unidad,val,step){
   var u=document.createElement("span"); u.className="u"; u.textContent=unidad;
   d.appendChild(l); d.appendChild(i); d.appendChild(u);
   return d;
+}
+
+/* ---------- tarjetas del protocolo activo ----------
+   Las variables que ya tienen columna propia (tos, descanso, cannabis, nota) tienen
+   su tarjeta fija arriba. Las nuevas (saliva, moco, gusto, náusea…) se dibujan acá
+   solas, leyendo la definición del protocolo. Se guardan en `extra`, en la MISMA
+   fila del día: un solo registro, como siempre. */
+function varsSinColumna(){
+  var out=[];
+  PROTOS.forEach(function(p){
+    if(diaDesde(p.fecha_inicio,activa)<0) return;                       // antes de empezar, no
+    var tope=p.dias_max||p.dias_min||21;
+    if(diaDesde(p.fecha_inicio,activa)>tope) return;                    // ya terminó
+    (p.variables||[]).forEach(function(v){ if(!v.col&&v.tipo!=="texto") out.push(v); });
+  });
+  return out;
+}
+function setExtra(key,val){
+  var r=dia(activa);
+  if(!r.extra) r.extra={};
+  r.extra[key]=val;
+  save();
+  renderProtoCards();
+  actualizarChip();   // si no, el contador del día ignora lo que se acaba de cargar
+  if(navigator.vibrate){ try{ navigator.vibrate(9); }catch(e){} }
+}
+function renderProtoCards(){
+  var wrap=document.getElementById("protoCards"); if(!wrap) return;
+  wrap.innerHTML="";
+  var r=DB.days[activa]||{}, ex=r.extra||{};
+  varsSinColumna().forEach(function(v){
+    var card=document.createElement("div"); card.className="card2";
+    var head=document.createElement("div"); head.className="cardhead";
+    head.innerHTML='<span class="q">'+v.label+'</span>'+
+                   '<i class="chk'+(ex[v.key]!=null?" on":"")+'">✓</i>';
+    card.appendChild(head);
+
+    var cont=document.createElement("div");
+    if(v.tipo==="escala"){
+      var lo=v.min==null?0:v.min, hi=v.max==null?10:v.max;
+      cont.className="escala "+((hi-lo+1)===11?"n11":"n10");
+      for(var n=lo;n<=hi;n++){
+        (function(val){
+          var b=document.createElement("button");
+          b.textContent=val;
+          b.setAttribute("aria-pressed", String(ex[v.key]===val));
+          b.onclick=function(){ setExtra(v.key,val); };
+          cont.appendChild(b);
+        })(n);
+      }
+    } else {
+      cont.className="tres";
+      var ops = v.tipo==="bool" ? [["si","Sí"],["no","No"]] : (v.opciones||[]);
+      if(v.tipo==="bool") cont.style.gridTemplateColumns="repeat(2,1fr)";
+      else if(ops.length>3) cont.style.gridTemplateColumns="repeat(2,1fr)";
+      ops.forEach(function(o){
+        var val = v.tipo==="bool" ? (o[0]==="si") : o[0];
+        var b=document.createElement("button");
+        b.textContent=o[1];
+        b.setAttribute("aria-pressed", String(ex[v.key]===val));
+        b.onclick=function(){ setExtra(v.key,val); };
+        cont.appendChild(b);
+      });
+    }
+    card.appendChild(cont);
+    wrap.appendChild(card);
+  });
 }
 
 function renderAviso(){
@@ -690,7 +769,7 @@ function renderDia(){
   document.getElementById("fechaTxt").innerHTML=f.head+"<small>"+f.sub+"</small>";
   document.getElementById("diaNext").disabled = activa>=hoyISO();
   document.getElementById("blk-entreno").hidden=!DB.settings.entreno;
-  pintarSeleccion(); renderExtras(); renderAviso();
+  pintarSeleccion(); renderProtoCards(); renderExtras(); renderAviso();
   var r=DB.days[activa]||{};
   var nota=document.getElementById("nota"), wrap=document.getElementById("notaWrap");
   nota.value=r.nota||"";

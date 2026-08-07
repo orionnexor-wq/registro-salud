@@ -6,13 +6,17 @@ Datos en Supabase (project `wafpvllhtaqfderrrwia`), login por magic link.
 
 Desde el **7-ago-2026** el registro tiene dos puertas de entrada y una sola base:
 
-| Puerta | Qué hace |
+| Pieza | Qué hace |
 |---|---|
-| **Bot "Salvavidas" en Telegram** (`F:\Code\bot-bari`, servicio `bot-bari` en el VPS) | Pregunta a la hora que diga el protocolo y guarda con botones. Nada que escribir salvo la nota. |
-| **Esta app** | Muestra las curvas, permite editar días y bajar el CSV. |
+| **Bot "Salvavidas" en Telegram** (`F:\Code\bot-bari`, servicio `bot-bari` en el VPS) | Avisa a la hora que diga el protocolo, con el link y qué toca cargar. No pregunta en el chat: el registro es uno solo y vive en la app. |
+| **Esta app** | Se carga TODO acá. Las variables del protocolo activo aparecen solas como tarjetas nuevas. También grafica y exporta. |
 
-Las dos escriben la **misma fila del mismo día** en la tabla `dias`. No hay copia
-que sincronizar ni historial partido en dos.
+**Todo queda en el mismo registro**: una fila por día en la tabla `dias`, sin
+historial partido en dos.
+
+> El bot también sabe preguntar con botones dentro del chat (el motor está
+> entero y testeado). Se activa vaciando `SALUD_LINK` en el `.env` del VPS.
+> Está apagado a pedido de Mati: *"quiero que todo siga en el mismo registro"*.
 
 ---
 
@@ -93,14 +97,14 @@ values ('washout_suplementos', '71d77634-…', 'Fin de washout', '2026-09-01', t
 
 | Comando | Qué hace |
 |---|---|
-| `/registro` | Abre la carga del turno que corresponda a la hora actual |
-| `/registro 2026-08-05` | Carga un día que se escapó |
-| `/ayer` | Atajo del anterior |
 | `/exportar` | Manda **CSV y JSON** por Telegram, uno por protocolo, con la columna `dia` |
+| `/registro` | Reenvía el link del día (o abre la carga por botones si `SALUD_LINK` está vacío) |
+| `/ayer` | Ídem para el día anterior |
 
-En cada pregunta hay **Saltear**, y en la primera **Hoy no** (marca el día sin
-registrar y no vuelve a insistir). Sin rachas, sin felicitaciones, sin lecturas:
-el bot registra y calla.
+Un aviso por turno y nada más: si no se carga, no insiste al día siguiente. Sin
+rachas, sin felicitaciones, sin lecturas de ningún tipo — registra y calla.
+
+Los días que se escaparon se cargan en la app con la flecha ‹ del encabezado.
 
 ---
 
