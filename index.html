@@ -407,6 +407,9 @@ async function pullTodo(){
     if(x.descanso!=null)o.desc=+x.descanso; if(x.cannabis!=null)o.can=x.cannabis;
     if(x.peso!=null)o.peso=+x.peso; if(x.cintura!=null)o.cintura=+x.cintura;
     if(x.entrenamiento!=null)o.ent=x.entrenamiento; if(x.nota!=null)o.nota=x.nota;
+    // Variables que llegan de un protocolo (saliva, moco, gusto…). No tienen
+    // columna propia: viven en `extra` y las carga el bot por Telegram.
+    if(x.extra&&Object.keys(x.extra).length)o.extra=x.extra;
     if(Object.keys(o).length) days[x.fecha]=o;
   });
   var proteger=Object.keys(dirty).concat(pend());
@@ -414,6 +417,12 @@ async function pullTodo(){
   DB.days=days;
   var ra=await sb("/rest/v1/ajustes?select=*");
   if(ra.ok){ var a=await ra.json(); if(a[0]){ DB.settings.entreno=!!a[0].entreno; DB.lastExport=a[0].last_export||null; } }
+  // Protocolos de seguimiento activos: definen qué variables graficar y desde
+  // qué día contar. La carga la hace el bot; acá solo se leen.
+  try{
+    var rp=await sb("/rest/v1/protocolos?select=*&activo=is.true&order=fecha_inicio");
+    if(rp.ok) PROTOS=await rp.json();
+  }catch(e){ /* sin protocolos la app sigue funcionando igual que antes */ }
   guardarLocal(); setCloud("synced"); return true;
 }
 async function syncDia(f){
@@ -751,15 +760,109 @@ function promTos(fechas){ return prom(fechas,function(r){ return tosDe(r); }); }
 function promCampo(fechas,c){ return prom(fechas,function(r){ return r&&r[c]!=null?r[c]:null; }); }
 function rangoFechas(desde,hasta){ var o=[],f=desde; while(f<=hasta){o.push(f);f=addDays(f,1);} return o; }
 
+/* ══════════════ protocolos de seguimiento ══════════════
+   La carga la hace el bot por Telegram; acá se ve la curva. Lo que hay que poder
+   mirar de un vistazo es si las series SE SEPARAN — la saliva bajando mientras la
+   tos sigue arriba dice una cosa distinta a las dos bajando juntas. Por eso van
+   superpuestas en el mismo eje y cada una se puede apagar tocando su nombre. */
+var PROTOS=[], SERIES_OFF={};
+var COL_SERIE=["#3987e5","#22a06b","#c98500","#d55181","#9b8cf5","#4bb3c4","#e0705a","#b0a55f"];
+var COL_LOCAL={descanso:"desc",cannabis:"can",entrenamiento:"ent"};  // nombre en la nube → nombre local
+
+function diaDesde(inicio,f){ return Math.round((parse(f)-parse(inicio))/86400000); }
+function valorDe(r,v){
+  if(!r) return null;
+  if(v.col){ var k=COL_LOCAL[v.col]||v.col; return r[k]==null?null:r[k]; }
+  return (r.extra||{})[v.key]==null?null:r.extra[v.key];
+}
+function seriesEscala(p){ return (p.variables||[]).filter(function(v){ return v.tipo==="escala"; }); }
+
+function renderProtocolos(body){
+  PROTOS.forEach(function(p){
+    var vars=seriesEscala(p); if(!vars.length) return;
+    var fechas=rangoFechas(p.fecha_inicio,hoyISO());
+    var cargados=fechas.filter(function(f){
+      return vars.some(function(v){ return valorDe(DB.days[f],v)!=null; }); });
+
+    var h=document.createElement("h3");
+    h.textContent=p.nombre+" · día "+diaDesde(p.fecha_inicio,hoyISO());
+    h.style.marginTop="4px"; body.appendChild(h);
+
+    var card=document.createElement("div"); card.className="card wrapRel";
+    if(cargados.length<2){
+      card.innerHTML='<div style="color:var(--muted);font-size:13px">'+cargados.length+
+        ' día'+(cargados.length===1?'':'s')+' cargado'+(cargados.length===1?'':'s')+
+        '. Con dos ya aparece la primera curva.</div>';
+      body.appendChild(card); return;
+    }
+    var cv=document.createElement("canvas"); card.appendChild(cv);
+    var leg=document.createElement("div"); leg.className="leyenda";
+    vars.forEach(function(v,i){
+      var clave=p.id+"|"+v.key, off=!!SERIES_OFF[clave];
+      var sw=document.createElement("span");
+      sw.style.cssText="cursor:pointer;opacity:"+(off?".38":"1");
+      sw.innerHTML='<i class="sw line" style="background:'+COL_SERIE[i%COL_SERIE.length]+'"></i>'+
+                   v.label.split(" (")[0];
+      sw.onclick=function(){ SERIES_OFF[clave]=!off; renderTendencia(); };
+      leg.appendChild(sw);
+    });
+    card.appendChild(leg);
+    body.appendChild(card);
+    dibujarProtocolo(cv,p,vars,fechas);
+  });
+}
+
+function dibujarProtocolo(cv,p,vars,fechas){
+  var c=setupCanvas(cv,240), g=c.g, W=c.w, H=c.h;
+  var L=26,R=6,T=10,B=26, N=fechas.length;
+  var pw=W-L-R, ph=H-T-B;
+  var x=function(i){ return N===1? L+pw/2 : L+(i/(N-1))*pw; };
+  var y=function(v){ return T+ph-(v/10)*ph; };
+
+  g.strokeStyle=COL.grid; g.lineWidth=1; g.fillStyle=COL.muted;
+  g.font="10px system-ui,sans-serif"; g.textAlign="right";
+  [0,5,10].forEach(function(v){
+    var yy=Math.round(y(v))+0.5;
+    g.beginPath(); g.moveTo(L,yy); g.lineTo(W-R,yy); g.stroke(); g.fillText(String(v),L-5,y(v));
+  });
+
+  vars.forEach(function(v,vi){
+    if(SERIES_OFF[p.id+"|"+v.key]) return;
+    var color=COL_SERIE[vi%COL_SERIE.length];
+    g.strokeStyle=color; g.lineWidth=2; g.lineJoin="round"; g.lineCap="round";
+    var abierto=false; g.beginPath();
+    fechas.forEach(function(f,i){
+      var val=valorDe(DB.days[f],v);
+      if(val==null){ abierto=false; return; }          // día sin cargar: corta la línea, no la inventa
+      if(!abierto){ g.moveTo(x(i),y(val)); abierto=true; } else g.lineTo(x(i),y(val));
+    });
+    g.stroke();
+    if(N<=25){
+      g.fillStyle=color;
+      fechas.forEach(function(f,i){
+        var val=valorDe(DB.days[f],v); if(val==null) return;
+        g.beginPath(); g.arc(x(i),y(val),3.2,0,6.284); g.fill();
+      });
+    }
+  });
+
+  var yBase=T+ph+0.5;
+  g.strokeStyle=COL.axis; g.beginPath(); g.moveTo(L,yBase); g.lineTo(W-R,yBase); g.stroke();
+  g.fillStyle=COL.muted; g.font="10px system-ui,sans-serif";
+  g.textAlign="left";  g.fillText("día 0",L,H-8);
+  g.textAlign="right"; g.fillText("día "+diaDesde(p.fecha_inicio,fechas[N-1]),W-R,H-8);
+}
+
 function renderTendencia(){
   var body=document.getElementById("tendBody");
   var conDatos=Object.keys(DB.days).filter(function(f){return tieneBase(DB.days[f]);}).sort();
+  body.innerHTML="";
+  renderProtocolos(body);   // el seguimiento en curso va primero: es el que se mira hoy
   if(conDatos.length<2){
-    body.innerHTML='<div class="vacio">Todavía no hay suficientes días cargados.<br>'+
+    body.innerHTML+='<div class="vacio">Todavía no hay suficientes días cargados.<br>'+
       'Con dos o tres días ya vas a ver la primera línea.</div>';
     return;
   }
-  body.innerHTML="";
 
   var porCat={no:[],vapo:[],fumado:[]};
   conDatos.forEach(function(f){ var r=DB.days[f], t=tosDe(r); if(r.can&&t!=null) porCat[r.can].push(t); });
