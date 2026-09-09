@@ -185,8 +185,14 @@ canvas{display:block;width:100%;touch-action:pan-y}
 .login{flex:1;display:flex;flex-direction:column;justify-content:center;gap:13px;max-width:340px;width:100%;margin:0 auto;padding:0 4px}
 .logintitle{font-size:27px;font-weight:700;letter-spacing:-.02em}
 .loginsub{font-size:15px;color:var(--ink-2);line-height:1.5;margin-bottom:4px}
-#loginEmail{height:52px;border-radius:14px;background:var(--surface);border:1px solid var(--ring);padding:0 14px;font-size:16px;color:var(--ink);outline:none}
-#loginEmail:focus{border-color:var(--ink-2)}
+#loginEmail,#loginPass{height:52px;border-radius:14px;background:var(--surface);border:1px solid var(--ring);padding:0 14px;font-size:16px;color:var(--ink);outline:none;width:100%}
+#loginEmail:focus,#loginPass:focus{border-color:var(--ink-2)}
+.passwrap{position:relative;display:flex}
+#loginPass{padding-right:52px}
+.passeye{position:absolute;right:4px;top:0;height:52px;width:46px;display:grid;place-items:center;color:var(--muted)}
+.passeye svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.linkalt{width:100%;padding:6px 0;font-size:13.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.loginmsg.err{color:#e66767}
 .loginmsg{font-size:13.5px;color:var(--ink-2);line-height:1.5;min-height:20px}
 .loginmsg.ok{color:var(--ok)}
 </style>
@@ -196,13 +202,20 @@ canvas{display:block;width:100%;touch-action:pan-y}
 
 <!-- ══════════════ LOGIN ══════════════ -->
 <section id="v-login" class="view">
-  <div class="login">
+  <form class="login" id="loginForm">
     <div class="logintitle">Tu registro diario</div>
-    <div class="loginsub">Privado y sincronizado entre tu teléfono y la compu. Entrás con tu mail — te llega un enlace, sin contraseñas.</div>
-    <input id="loginEmail" type="email" inputmode="email" autocomplete="email" enterkeyhint="go" placeholder="tu@email.com">
-    <button id="loginBtn" class="btn primary">Enviarme el enlace</button>
+    <div class="loginsub">Privado y sincronizado entre tu teléfono y la compu.</div>
+    <input id="loginEmail" name="username" type="email" inputmode="email" autocomplete="username" enterkeyhint="next" placeholder="tu@email.com">
+    <div class="passwrap">
+      <input id="loginPass" name="password" type="password" autocomplete="current-password" enterkeyhint="go" placeholder="Contraseña">
+      <button type="button" class="passeye" id="passEye" aria-label="Ver la contraseña">
+        <svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button id="loginBtn" type="submit" class="btn primary">Entrar</button>
     <div id="loginMsg" class="loginmsg"></div>
-  </div>
+    <button id="linkBtn" type="button" class="linkalt">Mandarme un enlace al mail</button>
+  </form>
 </section>
 
 <!-- ══════════════ HOY ══════════════ -->
@@ -494,13 +507,34 @@ async function flushDirty(){
 }
 function renderAjustesSiVisible(){ if(document.getElementById("v-aj").classList.contains("on")) renderAjustes(); }
 
-/* magic link */
+/* ── entrar con contraseña ──
+   Puerta principal: no depende de que llegue un mail, ni de en qué navegador se
+   abra el enlace. La sesión que devuelve no vence (sessions_timebox=0), así que
+   se hace una sola vez por dispositivo. */
+async function entrarConPass(email,pass){
+  var r=await fetch(SB_URL+"/auth/v1/token?grant_type=password",{
+    method:"POST", headers:{"apikey":SB_ANON,"Content-Type":"application/json"},
+    body:JSON.stringify({email:email, password:pass})});
+  var d={}; try{ d=await r.json(); }catch(e){}
+  if(r.ok && d.access_token){ aplicarToken(d); return {ok:true}; }
+  if(r.status===400) return {ok:false, msg:"Ese mail o esa contraseña no son los de esta app. Revisá con cuál de tus mails la creaste."};
+  if(r.status===429) return {ok:false, msg:"Demasiados intentos seguidos. Esperá un minuto y probá de nuevo."};
+  return {ok:false, msg:"No se pudo entrar ahora mismo (error "+r.status+"). Probá de nuevo en un rato."};
+}
+
+/* ── enlace por mail (respaldo) ──
+   Devuelve el motivo real del rechazo. Antes cualquier error se mostraba como
+   "límite de mails por hora", y el caso más común —el mail no es el de esta
+   app— quedaba disfrazado de problema de correo. */
 async function enviarLink(email){
   var redir=location.origin+location.pathname;
   var r=await fetch(SB_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(redir),{
     method:"POST", headers:{"apikey":SB_ANON,"Content-Type":"application/json"},
     body:JSON.stringify({email:email, create_user:false})});
-  return r.ok;
+  if(r.ok) return {ok:true};
+  if(r.status===400 || r.status===422) return {ok:false, msg:"Ese mail no está registrado en esta app. Probá con el otro mail tuyo."};
+  if(r.status===429) return {ok:false, msg:"Llegaste al límite de mails por hora. Esperá unos minutos, o entrá con tu contraseña."};
+  return {ok:false, msg:"No se pudo enviar (error "+r.status+"). Entrá con tu contraseña."};
 }
 function parseHash(){
   if(location.hash && location.hash.indexOf("access_token")>=0){
@@ -1219,24 +1253,79 @@ document.getElementById("btnBorrar").onclick=function(){
 };
 
 /* ══════════════ login / arranque ══════════════ */
-function mostrarLogin(){ ver("v-login"); }
+function mostrarLogin(){
+  // El mail con el que entraste la ultima vez queda puesto: hay mas de una
+  // casilla en juego y equivocarse era el motivo mas frecuente de no poder entrar.
+  try{
+    var m=localStorage.getItem("registro_salud_ultimo_mail");
+    if(m) document.getElementById("loginEmail").value=m;
+  }catch(e){}
+  ver("v-login");
+}
 function mostrarApp(){ ver("v-hoy"); }
-document.getElementById("loginBtn").onclick=async function(){
-  var email=(document.getElementById("loginEmail").value||"").trim().toLowerCase();
-  var msg=document.getElementById("loginMsg");
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.className="loginmsg"; msg.textContent="Escribí un mail válido."; return; }
-  this.disabled=true; msg.className="loginmsg"; msg.textContent="Enviando…";
-  var ok=false; try{ ok=await enviarLink(email); }catch(e){}
+var LAST_MAIL="registro_salud_ultimo_mail";
+function elMail(){ return (document.getElementById("loginEmail").value||"").trim().toLowerCase(); }
+function decir(txt,clase){
+  var m=document.getElementById("loginMsg");
+  m.className="loginmsg"+(clase?" "+clase:""); m.textContent=txt;
+}
+function mailValido(e){
+  if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return true;
+  decir("Escribí un mail válido."); return false;
+}
+
+/* Entrar con contraseña — va como submit del form, así el navegador ofrece
+   guardar el mail y la contraseña y la próxima vez los completa solo. */
+document.getElementById("loginForm").addEventListener("submit",async function(ev){
+  ev.preventDefault();
+  var email=elMail(), pass=document.getElementById("loginPass").value||"";
+  var btn=document.getElementById("loginBtn");
+  if(!mailValido(email)) return;
+  if(!pass){ decir("Te falta la contraseña. Si preferís, pedí un enlace al mail."); return; }
+  btn.disabled=true; decir("Entrando…");
+  var r; try{ r=await entrarConPass(email,pass); }
+  catch(e){ r={ok:false,msg:"No hay internet o el servidor no responde."}; }
+  btn.disabled=false;
+  if(!r.ok){ decir(r.msg,"err"); return; }
+  try{ localStorage.setItem(LAST_MAIL,email); }catch(e){}
+  document.getElementById("loginPass").value="";
+  decir("");
+  await entrarYa();
+});
+
+/* Enlace por mail — queda como respaldo */
+document.getElementById("linkBtn").onclick=async function(){
+  var email=elMail();
+  if(!mailValido(email)) return;
+  this.disabled=true; decir("Enviando…");
+  var r; try{ r=await enviarLink(email); } catch(e){ r={ok:false,msg:"No hay internet o el servidor no responde."}; }
   this.disabled=false;
-  if(ok){ msg.className="loginmsg ok"; msg.textContent="Listo. Te mandé un enlace a "+email+". Abrilo DESDE ESTE dispositivo para entrar (mirá también spam)."; }
-  else { msg.className="loginmsg"; msg.textContent="No se pudo enviar (puede ser el límite de mails por hora). Esperá unos minutos y reintentá."; }
+  if(r.ok) decir("Listo. Te mandé un enlace a "+email+". Abrilo DESDE ESTE dispositivo (mirá también spam).","ok");
+  else decir(r.msg,"err");
 };
-document.getElementById("loginEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+
+/* mostrar / ocultar la contraseña */
+document.getElementById("passEye").onclick=function(){
+  var i=document.getElementById("loginPass");
+  i.type = i.type==="password" ? "text" : "password";
+  this.setAttribute("aria-label", i.type==="password" ? "Ver la contraseña" : "Ocultar la contraseña");
+  i.focus();
+};
 document.getElementById("btnLogout").onclick=function(){
   if(!confirm("¿Cerrar sesión en este dispositivo? Tus datos siguen guardados en la nube.")) return;
   clearSession(); toast("Sesión cerrada"); mostrarLogin();
 };
 
+/* Lo que pasa una vez que hay sesion, venga de donde venga: del arranque con
+   sesion guardada, del enlace del mail o de entrar con la contrasena. */
+async function entrarYa(){
+  setCloud("syncing");
+  if(!session.user){ try{ await fetchUser(); }catch(e){} }
+  mostrarApp();
+  renderDia();
+  try{ await reintentarPend(); await pullTodo(); renderDia(); setCloud(pend().length?"off":"synced"); }
+  catch(e){ setCloud("off"); }
+}
 async function arranque(){
   loadSession();
   parseHash();
@@ -1244,12 +1333,7 @@ async function arranque(){
   construirEscalas();
   renderDia();
   if(!session){ mostrarLogin(); return; }
-  setCloud("syncing");
-  if(!session.user){ try{ await fetchUser(); }catch(e){} }
-  mostrarApp();
-  renderDia();
-  try{ await reintentarPend(); await pullTodo(); renderDia(); setCloud(pend().length?"off":"synced"); }
-  catch(e){ setCloud("off"); }
+  await entrarYa();
 }
 arranque();
 
