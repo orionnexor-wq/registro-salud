@@ -2,10 +2,10 @@
 
 App personal de registro diario (PWA, sin build, un solo `index.html`) publicada en
 GitHub Pages: **https://orionnexor-wq.github.io/registro-salud/**
-Datos en Supabase (project `wafpvllhtaqfderrrwia`). Se entra con **mail + contraseña**
+Datos en Supabase. Se entra con **mail + contraseña**
 (desde el 9-sep-2026), y el enlace por mail queda como respaldo: depender solo del
 enlace dejaba afuera al que abría la app en otro navegador. La contraseña vive en
-`_secrets/registro_salud_supabase.env`. La sesión no caduca: se entra una vez por dispositivo.
+el archivo de credenciales local (fuera del repo). La sesión no caduca: se entra una vez por dispositivo.
 
 Desde el **7-ago-2026** el registro tiene dos puertas de entrada y una sola base:
 
@@ -130,7 +130,8 @@ bot-bari/                         (no está en git — deploy = scp + restart)
 Correr los tests (en el VPS):
 
 ```bash
-ssh <vps> "cd /root/bot-bari && .venv/bin/python test_seguimiento.py && .venv/bin/python test_seguimiento_live.py"
+# en el servidor del bot:
+cd /root/bot-bari && .venv/bin/python test_seguimiento.py && .venv/bin/python test_seguimiento_live.py
 ```
 
 ## Costo
